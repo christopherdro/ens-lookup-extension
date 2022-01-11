@@ -1,0 +1,102 @@
+diff --git a/node_modules/@ethersproject/providers/lib.esm/base-provider.js b/node_modules/@ethersproject/providers/lib.esm/base-provider.js
+index c8ea4f8..18a80c5 100644
+--- a/node_modules/@ethersproject/providers/lib.esm/base-provider.js
++++ b/node_modules/@ethersproject/providers/lib.esm/base-provider.js
+@@ -24,6 +24,7 @@ import { Logger } from "@ethersproject/logger";
+ import { version } from "./_version";
+ const logger = new Logger(version);
+ import { Formatter } from "./formatter";
++import { formatsByCoinType } from "@ensdomains/address-encoder";
+ //////////////////////////////
+ // Event Serializeing
+ function checkTopic(topic) {
+@@ -228,58 +229,6 @@ export class Resolver {
+             }
+         });
+     }
+-    _getAddress(coinType, hexBytes) {
+-        const coinInfo = coinInfos[String(coinType)];
+-        if (coinInfo == null) {
+-            logger.throwError(`unsupported coin type: ${coinType}`, Logger.errors.UNSUPPORTED_OPERATION, {
+-                operation: `getAddress(${coinType})`
+-            });
+-        }
+-        if (coinInfo.ilk === "eth") {
+-            return this.provider.formatter.address(hexBytes);
+-        }
+-        const bytes = arrayify(hexBytes);
+-        // P2PKH: OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+-        if (coinInfo.p2pkh != null) {
+-            const p2pkh = hexBytes.match(/^0x76a9([0-9a-f][0-9a-f])([0-9a-f]*)88ac$/);
+-            if (p2pkh) {
+-                const length = parseInt(p2pkh[1], 16);
+-                if (p2pkh[2].length === length * 2 && length >= 1 && length <= 75) {
+-                    return base58Encode(concat([[coinInfo.p2pkh], ("0x" + p2pkh[2])]));
+-                }
+-            }
+-        }
+-        // P2SH: OP_HASH160 <scriptHash> OP_EQUAL
+-        if (coinInfo.p2sh != null) {
+-            const p2sh = hexBytes.match(/^0xa9([0-9a-f][0-9a-f])([0-9a-f]*)87$/);
+-            if (p2sh) {
+-                const length = parseInt(p2sh[1], 16);
+-                if (p2sh[2].length === length * 2 && length >= 1 && length <= 75) {
+-                    return base58Encode(concat([[coinInfo.p2sh], ("0x" + p2sh[2])]));
+-                }
+-            }
+-        }
+-        // Bech32
+-        if (coinInfo.prefix != null) {
+-            const length = bytes[1];
+-            // https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#witness-program
+-            let version = bytes[0];
+-            if (version === 0x00) {
+-                if (length !== 20 && length !== 32) {
+-                    version = -1;
+-                }
+-            }
+-            else {
+-                version = -1;
+-            }
+-            if (version >= 0 && bytes.length === 2 + length && length >= 1 && length <= 75) {
+-                const words = bech32.toWords(bytes.slice(2));
+-                words.unshift(version);
+-                return bech32.encode(coinInfo.prefix, words);
+-            }
+-        }
+-        return null;
+-    }
+     getAddress(coinType) {
+         return __awaiter(this, void 0, void 0, function* () {
+             if (coinType == null) {
+@@ -314,7 +263,8 @@ export class Resolver {
+                 return null;
+             }
+             // Compute the address
+-            const address = this._getAddress(coinType, hexBytes);
++            const address = formatsByCoinType[coinType].encoder(Buffer.from(arrayify(hexBytes)));
++
+             if (address == null) {
+                 logger.throwError(`invalid or unsupported coin data`, Logger.errors.UNSUPPORTED_OPERATION, {
+                     operation: `getAddress(${coinType})`,
+diff --git a/node_modules/@ethersproject/providers/lib/base-provider.js b/node_modules/@ethersproject/providers/lib/base-provider.js
+index 7928025..99a6cf2 100644
+--- a/node_modules/@ethersproject/providers/lib/base-provider.js
++++ b/node_modules/@ethersproject/providers/lib/base-provider.js
+@@ -304,6 +304,8 @@ var Resolver = /** @class */ (function () {
+     };
+     Resolver.prototype._getAddress = function (coinType, hexBytes) {
+         var coinInfo = coinInfos[String(coinType)];
++                console.log("!!! Root 1", hexBytes)
++
+         if (coinInfo == null) {
+             logger.throwError("unsupported coin type: " + coinType, logger_1.Logger.errors.UNSUPPORTED_OPERATION, {
+                 operation: "getAddress(" + coinType + ")"
+@@ -357,6 +359,7 @@ var Resolver = /** @class */ (function () {
+     Resolver.prototype.getAddress = function (coinType) {
+         return __awaiter(this, void 0, void 0, function () {
+             var transaction, hexBytes_1, error_2, hexBytes, address;
++            console.log("!!! Root", hexBytes)
+             return __generator(this, function (_a) {
+                 switch (_a.label) {
+                     case 0:
