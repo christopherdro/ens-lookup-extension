@@ -1,14 +1,9 @@
-## Features
+# ENS Lookup Extension Demo
+Browser extension used to lookup ENS profiles by highlighting a .eth address. Built solely for research purposes. 
 
-- Cross Browser Support (Web-Extensions API)
-- Browser Tailored Manifest generation
-- Automatic build on code changes
-- Auto packs browser specific build files
-- SASS styling
-- TypeScript by default
-- ES6 modules support
-- React UI Library by default
-- Smart reload
+![ens-ext-demo](https://user-images.githubusercontent.com/3741055/149399597-f538e366-14b0-4392-bd7b-d98f165190cd.gif)
+
+Built using https://github.com/abhijithvijayan/web-extension-starter
 
 ## Browser Support
 
